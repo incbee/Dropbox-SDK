@@ -1,0 +1,104 @@
+Getting Started Using the DropboxSDK for OSX:
+
+Requirements:
+1. You need a recent version of Xcode
+2. You need to have registered your app at https://dropbox.com/developers/apps
+   You should have an app key and secret.
+
+
+Building and using the example app:
+1. Open the project file in examples/DBRouletteOSX/DBRouletteOSX.xcodeproj
+2. Fill in the values for appKey, appSecret, and root in 
+   AppDelegate.m applicationDidFinishLaunching:
+3. Right click on DBRouletteOSX-Info.plist in the file browser and select
+   "Open As" -> "Source Code". Substitute APP_KEY with your app key in the file.
+4. Build and Run app
+5. Once running, make sure you can use the app to login and view photos without
+   getting errors. The sample app will look inside your Dropbox's Photos
+   folder if you have full Dropbox access or in your app's App folder if you
+   have App folder access.
+
+If you cannot run the app without getting errors, make sure your app key
+and app secret are correct.
+
+Adding DropboxOSX framework to your project:
+Before you can use the Dropbox API in your app, you'll need to add the
+framework to your project.
+
+1. Open your project in Xcode
+2. Right-click on your project in the files tab of the left pane and
+   select "Add Files to '<PROJECT_NAME>'"
+4. Navigate to where you uncompressed the Dropbox SDK and select the 
+   DropboxOSX.framework subfolder
+5. Select "Copy items into destination group's folder"
+6. Press Add button
+7. Ensure that you have the Security.framework added to your project. To do this
+   in Xcode4, select your project file in the file explorer, select your target,
+   and select the "Build Phases" sub-tab. Under "Link Binary with Libraries",
+   press the + button, select Security.framework, and press Add.
+8. Also in the "Build Phases" sub-tab, click the "Add Build Phase" button in
+   the lower right hand corner and select "Add Copy Files". In the new build
+   phase that's created, click the + button and add DropboxOSX.framework to
+   be copied into the Resouces folder.
+9. Build and run your application. At this point you should have no build
+   failures or warnings, and be able to run your app successfully.
+
+Authentication:
+Now that you've added the framework, the next step is to authenticate which will
+allow you to make requests against the Dropbox API.
+
+1. Set the shared DBSession object. To do this, create a DBSession object using
+   the -[DBSession initWithAppKey:appSecret:root:] constructor in your
+   AppDelegates applicationDidFinishLaunching: method. You will need to fill in
+   the appropriate values of app key, secret and root for your app found at
+   https://dropbox.com/developers/apps.
+
+   Once you've created the session, you can set it as the shared session
+   using +[DBSession setSharedSession]. Also make sure you're importing the SDK:
+   #import <DropboxOSX/DropboxOSX.h>
+2. Add a url handler for db-APP_KEY in your plist file, where APP_KEY is the
+   app key for your app that you included in your DBSession object. If your
+   app isn't registered for any url handlers, the easiest way to add them is
+   - Right-click on your plist file, and select "Open As" -> "Source Code".
+   - Paste the following code into the file:
+     <key>CFBundleURLTypes</key>
+     <array>
+         <dict>
+             <key>CFBundleURLName</key>
+             <string>Dropbox SDK</string>
+             <key>CFBundleURLSchemes</key>
+             <array>
+                 <string>db-APP_KEY</string>
+             </array>
+         </dict>
+     </array>
+   - Substitute APP_KEY with your app key
+3. Register
+4. Integrate DBAuthHelperOSX into the controller where the user links his
+   Dropbox account (This is done in AppDelegate.m in the example app
+   DBRouletteOSX). This involves three things:
+   - #import <DropboxOSX/DropboxOSX.h>
+   - Before you use the auth helper (such as when the controller is created),
+     you need to subscribe to the DBAuthHelperOSXStateChangedNotification like
+     this:
+     [[NSNotificationCenter defaultCenter]
+      addObserver:self selector:@selector(authHelperStateChangedNotification:)
+      name:DBAuthHelperOSXStateChangedNotification
+      object:[DBAuthHelperOSX sharedHelper]];
+
+     In your authHelperStateChangedNotification: method you should update the
+     state of your linked status. Look at
+     -[AppDelegate authHelperStateChangedNotification:] in DBRouletteOSX for an
+     example.
+   - When the user initiates the link process, call:
+     [[DBAuthHelperOSX sharedHelper] authenticate];
+
+   Once you get a DBAuthHelperOSXStateChangedNotification and
+   [[DBSession sharedSession] isLinked] is YES you're ready to start making
+   API calls.
+
+
+Loading Files and Folders:
+For more information on how to make calls using the API, check out our tutorial
+online at https://dropbox.com/developers/start/files#ios for iOS. Once you're
+authenticated the iOS and OS X SDKs are the same.
